@@ -31,8 +31,8 @@
 - [x] 在热门标签里面，有在网上找的热门书签。可以转存收藏到自己书签里面，快捷键R随机查看热门书签。
 - [x] 新增备忘录功能，有时候随手要做点纪录，就方便了。任意界面按快捷键A增加备忘录。双击备忘录可查看详情！
 - [x] 在设置的全局链接，可设置快捷键，用来在任何页面，快速打开设置的链接。
-- [x] 增加[Chrome插件](https://chrome.google.com/webstore/detail/%E4%B9%A6%E7%AD%BE%E5%BF%AB%E9%80%9F%E6%B7%BB%E5%8A%A0/paajmalhmjgdihaikmdfiplfmjlnkjgp)，可在任意界面快速添加书签至系统。
-- [ ] 适配手机平板（无限搁置）。
+- [x] 增加[Chrome插件](https://chrome.google.com/webstore/detail/%E4%B9%A6%E7%AD%BE%E5%BF%AB%E9%80%9F%E6%B7%BB%E5%8A%A0/paajmalhmjgdihaikmdfiplfmjlnkjgp)，可在任意界面快速添加书签至系统。   
+- [x] 适配手机平板，手机端请访问[m.mybookmark.cn](http://m.mybookmark.cn/)。   
 
 
 4 主要用到的模块说明
@@ -89,16 +89,13 @@ my-bookmark/
 │   │   ├── externe/                          # 外部引入的JS文件
 |   |   |   ├── angular.min.js                # angular文件
 |   |   |   ├── angular-cookies.min.js        # angular前台cookies模块
-|   |   |   ├── angular-medium-editor.min.js  # 编辑器，书签编辑页面使用
 |   |   |   ├── angular-sortable-view.min.js  # 可以拖拽元素的控件，用于分类页面
 |   |   |   ├── angular-ui-router.min.js      # angular web客户端的路由
 |   |   |   ├── calendar.min.js               # 一个日历控件，用于搜索页面
-|   |   |   ├── canvas-nest.min.js            # 一个很赞的网页背景效果(装逼)
 |   |   |   ├── clipboard.min.js              # 用于复制粘贴库，不需要flash
 |   |   |   ├── jquery.form.js                # 表单异步提交(想不起哪里用了)
 |   |   |   ├── jquery.uploadfile.min.js      # 文件上传控件，用于上传浏览器导出书签
 |   |   |   ├── jquery-3.1.1.min.js           # jquery文件
-|   |   |   ├── medium-editor.min.js          # 编辑器，angular-medium-editor依赖
 |   |   |   ├── ngDialog.min.js               # 一个angular对话框控件
 |   |   |   ├── ng-infinite-scroll.min.js     # 一个angular无限滚动加载数据控件
 |   |   |   ├── semantic.min.js               # semantic文件
@@ -117,7 +114,6 @@ my-bookmark/
 |   |   ├── dialog-del-bookmark.html          # 书签删除确认页面
 |   |   ├── dialog-del-note.html              # 备忘录删除确认页面
 |   |   ├── dialog-del-tag.html               # 分类删除确认页面
-|   |   ├── dialog-detail-note.html           # 备忘录详情页面
 |   |   ├── edit.html                         # 书签添加修改页面
 |   |   ├── home.html                         # 未登录时首页页面
 |   |   ├── hot.html                          # 热门收藏页面
@@ -143,7 +139,7 @@ my-bookmark/
 --------------------
 ```
 "body-parser": bodyParser用于解析客户端请求的body中的内容,内部使用JSON编码处理
-"connect-mongo": 用于将session存入MongoDB
+"connect-redis": 用于将session存入Redis
 "cheerio": 用于后端的jQuery，解析从浏览器导出来上传到服务器的书签html文件
 "cookie-parser": 处理每一个请求的cookie
 "crypto": 加密模块，主要用来加密用户的密码
@@ -159,12 +155,11 @@ my-bookmark/
 "path": 路径处理模块。
 "request": http请求模块。主要用来获取热门书签数据。
 "supervisor": 文件改变监视文件，开发使用。
-"webshot": 网页截图模块。
 ```
 
 7 安装部署指南
 -------------
-1、安装MySQL数据库。如果不会，请戳教程[MySQL 数据库安装教程](http://let-me-teach-you-baidu.luchenqun.com/?mysql%20%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B "mysql 数据库安装教程")。有点需要注意的是，MySQL的版本至少要是5.6。否则执行schema.sql文件会出错。   
+1、安装MySQL数据库。如果不会，请戳教程[MySQL 数据库安装教程](http://baidu.luchenqun.com/?mysql%20%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B "mysql 数据库安装教程")。有点需要注意的是，MySQL的版本至少要是5.6。否则执行schema.sql文件会出错。   
 2、新建一个数据库名，使用MySQL将根目录下面的schema.sql文件执行一遍，创建数据库表格。有个问题尤其要注意：**数据库一定要使用UTF-8的编码**，否则执行一些汉字的sql语句会出错！如果是Ubuntu，大概过程如下。
 ```
 mysql -u root -p // 使用root账号进入mysql数据库。按回车之后输入安装时候root的密码。
@@ -174,7 +169,7 @@ GRANT ALL ON *.* TO 'test'@'%';  // 给刚创建的test用户数据库所有的�
 use mybookmarks; //选择刚创建的数据库。
 source /home/lcq/schema.sql; // 执行schema.sql文件创建数据库表格。注意，将路径换为你schema.sql所在路径。   
 ```
-3、安装MongoDB 安装教程。如果不会，请戳教程[MongoDB 安装教程](http://let-me-teach-you-baidu.luchenqun.com/?MongoDB%20%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B "MongoDB 安装教程")，安装完成之后如果MongoDB没有启动，请启动MongoDB。   
+3、安装Redis 安装教程。如果不会，请戳教程[Redis 安装教程](http://baidu.luchenqun.com/?redis%20%E5%AE%89%E8%A3%85 "Redis 安装教程")，安装完成之后如果Redis没有启动，请启动Redis。   
 4、安装Node.js。Node.js版本至少要求6.0以上。不会的话，请按照上面步骤1、3提供的方法自行解决。   
 5、克隆代码`git@github.com:luchenqun/my-bookmark.git`，切换到项目根目录下面，执行`npm install`安装package。   
 6、更新/database/db.js文件的dbConfig配置，将你mysql的数据信息更新上去。   

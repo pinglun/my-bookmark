@@ -1,8 +1,7 @@
 app.controller('noteCtr', ['$scope', '$state', '$stateParams', '$filter', '$window', '$timeout', '$document', 'ngDialog', 'bookmarkService', 'pubSubService', 'dataService', function ($scope, $state, $stateParams, $filter, $window, $timeout, $document, ngDialog, bookmarkService, pubSubService, dataService) {
     console.log("Hello noteCtr...", $stateParams);
-    var browser = dataService.browser();
-    if(browser.mobile && !browser.iPad){
-        $window.location = "http://m.mybookmark.cn/#/note";
+    if(dataService.smallDevice()){
+        $window.location = "http://m.mybookmark.cn/#/tags";
         return;
     }
 
@@ -39,7 +38,7 @@ app.controller('noteCtr', ['$scope', '$state', '$stateParams', '$filter', '$wind
             getNotes();
         })
         .catch((err) => {
-            console.log('autoLogin err', err)
+            dataService.netErrorHandle(err, $state)
         });
 
     $scope.changeCurrentPage = function (currentPage) {
@@ -284,6 +283,41 @@ app.controller('noteCtr', ['$scope', '$state', '$stateParams', '$filter', '$wind
         if (flag) {
             $event && $event.stopPropagation();
         }
+    }
+
+    $scope.share = function (note) {
+        var time = 100;
+        if(note.public == '0') {
+            toastr.info('由于打算分享备忘，系统会自动将备忘的私密状态转为公开状态');
+            $scope.updatePublic(note, '1');
+            time = 1000;
+        }
+        setTimeout(() => {
+            dataService.clipboard(`https://mybookmark.cn/api/notes/?shareNote=${note.id}`);
+            toastr.info(`将地址 https://mybookmark.cn/api/notes/?shareNote=${note.id} 发给别人粘贴到浏览器地址栏就可以访问到你分享的备忘啦！`, "提示");
+        }, time)
+
+    }
+
+    $scope.updatePublic = function(note, public) {
+        var params = {
+            id: note.id,
+            public: public,
+        }
+
+        bookmarkService.updateNotePublic(params)
+            .then((data) => {
+                if (data.result == 1) {
+                    public == 1 && toastr.success('备忘已由私密状态转为公开状态', "提示");
+                    public == 0 && toastr.success('备忘已由公开状态转为私密状态', "提示");
+                    note.public = public;
+                } else {
+                    toastr.error('备忘状态更新失败', "提示");
+                }
+            })
+            .catch((err) => {
+                toastr.error('备忘更新失败！错误提示：' + JSON.stringify(err), "提示");
+            });
     }
 
     function updateSelectTag(tagId) {

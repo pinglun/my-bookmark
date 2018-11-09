@@ -1,13 +1,12 @@
 app.controller('settingsCtr', ['$scope', '$stateParams', '$filter', '$state', '$window', '$timeout', 'bookmarkService', 'pubSubService', 'dataService', function($scope, $stateParams, $filter, $state, $window, $timeout, bookmarkService, pubSubService, dataService) {
     console.log('Hello settingsCtr......', $stateParams);
-    var browser = dataService.browser();
-    if(browser.mobile && !browser.iPad){
-        $window.location = "http://m.mybookmark.cn/#/settings";
+    if(dataService.smallDevice()){
+        $window.location = "http://m.mybookmark.cn/#/tags";
         return;
     }
 
     $scope.forbidQuickKey = dataService.forbidQuickKey
-    $scope.form = [false, false, false, false, false, false];
+    $scope.form = [false, false, false, false, false, false, false];
     $scope.passwordOrgin = "";
     $scope.passwordNew1 = "";
     $scope.passwordNew2 = "";
@@ -60,12 +59,21 @@ app.controller('settingsCtr', ['$scope', '$stateParams', '$filter', '$state', '$
                         $scope.loadShowStyle = false;
                     }
                     if (index == 4) {
-                        $scope.quickUrl = JSON.parse($scope.user.quick_url || '{}');
+                        function objKeySort(obj) {
+                            var newkey = Object.keys(obj).sort();
+                            var newObj = {};
+                            for (var i = 0; i < newkey.length; i++) {
+                                newObj[newkey[i]] = obj[newkey[i]];
+                            }
+                            return newObj;//返回排好序的新对象
+                        }
+
+                        $scope.quickUrl = objKeySort(JSON.parse($scope.user.quick_url || '{}'));
+
                     }
                 })
                 .catch((err) => {
-                    console.log(err);
-                    toastr.error('获取信息失败。错误信息：' + JSON.stringify(err), "错误");
+                    dataService.netErrorHandle(err, $state)
                     $scope.loadShowStyle = false;
                 });
         }
@@ -80,7 +88,7 @@ app.controller('settingsCtr', ['$scope', '$stateParams', '$filter', '$state', '$
                     })
                 })
                 .catch((err) => {
-                    console.log('getTags err', err);
+                    dataService.netErrorHandle(err, $state)
                 });
         }
 

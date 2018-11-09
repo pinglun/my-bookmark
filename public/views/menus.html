@@ -13,29 +13,24 @@
                             <label>导航</label>
                         </div>
                     </div>
-                    <!-- <div class="field item js-field-costomTag" ng-click="updateShowStyle('costomTag')">
-                        <div class="ui radio checkbox js-radio-costomTag">
-                            <input type="radio" name="costomTag-style">
-                            <label>标签</label>
-                        </div>
-                    </div> -->
                     <div class="field item js-field-table" ng-click="updateShowStyle('table')">
                         <div class="ui radio checkbox js-radio-table">
                             <input type="radio" name="show-style">
                             <label>表格</label>
                         </div>
                     </div>
-                    <div class="field item js-field-card" ng-click="updateShowStyle('card')">
+                    <!-- 卡片这个傻逼模式就没用过，干掉 -->
+                    <!-- <div class="field item js-field-card" ng-click="updateShowStyle('card')">
                         <div class="ui radio checkbox js-radio-card">
                             <input type="radio" name="show-style">
                             <label>卡片</label>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </a>
         <div class="right menu">
-            <div class="item" style="min-width:350px;">
+            <div class="item">
                 <div class="ui transparent icon input">
                     <label for="lcq">
                         <div class="ui inline dropdown js-search-option" style="margin-top:3px;" js-search-option-init>
@@ -63,13 +58,8 @@
                 </div>
             </div>
             <div class="item" style="padding:0 8px 0 13px;" title="添加书签" ng-click="showAddBookmarkMoadl()">
-                <span data-tooltip="添加书签，可用Insert快捷键">
+                <span data-tooltip="添加书签，可按Insert快速打开添加页面">
                     <i class="add square icon"></i>
-                </span>
-            </div>
-            <div class="item" style="padding:0 8px 0 13px;">
-                <span data-tooltip="退出登陆">
-                    <i class="sign out icon" title="退出登陆" ng-click="logout()"></i>
                 </span>
             </div>
             <div class="item" style="padding:0 8px 0 13px;" ng-click="star()">
@@ -80,6 +70,16 @@
             <div class="item" style="padding:0 8px 0 13px;" ng-click="showUpdate()">
                 <span class="suggest">
                     <i class="info circle icon"></i>
+                </span>
+            </div>
+            <div class="item" style="padding:0 8px 0 13px;" ng-click="coffee()">
+                <span data-tooltip="请我喝杯咖啡">
+                    <i class="coffee icon"></i>
+                </span>
+            </div>
+            <div class="item" style="padding:0 8px 0 13px;">
+                <span data-tooltip="退出登陆">
+                    <i class="sign out icon" title="退出登陆" ng-click="logout()"></i>
                 </span>
             </div>
         </div>

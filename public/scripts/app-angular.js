@@ -1,8 +1,6 @@
-var app = angular.module('bookmarkApp', ['ui.router', 'ngCookies', 'infinite-scroll', 'angular-sortable-view', 'ngDialog', 'angular-medium-editor']);
+var app = angular.module('bookmarkApp', ['ui.router', 'ngCookies', 'infinite-scroll', 'angular-sortable-view', 'ngDialog']);
 
 app.config(function($stateProvider, $urlRouterProvider, $httpProvider) {
-    $httpProvider.interceptors.push('httpInterceptor');
-
     $urlRouterProvider.otherwise("/");
 
     $stateProvider
@@ -108,3 +106,5 @@ console.log([
     "          别人笑我忒疯癫，我笑自己命太贱；",
     "          不见满街漂亮妹，哪个归得程序员？",
 ].join('\n'));
+
+console.log = function(){}

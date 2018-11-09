@@ -410,7 +410,11 @@ db.getUser = function(username) {
 };
 
 db.getTags = function(user_id) {
-    var sql = "SELECT t.id, t.user_id, t.name, DATE_FORMAT(t.last_use, '%Y-%m-%d %H:%i:%s') as last_use, t.sort, tb.cnt, tg.ncnt FROM `tags` as t LEFT OUTER JOIN ( SELECT `tag_id`, COUNT(tag_id) as cnt FROM tags_bookmarks GROUP BY tag_id ) tb ON t.id = tb.tag_id  LEFT OUTER JOIN ( SELECT `tag_id`, COUNT(tag_id) as ncnt FROM notes GROUP BY tag_id ) tg ON t.id = tg.tag_id WHERE t.user_id = '" + user_id + "' ORDER BY t.sort, t.last_use DESC";
+    var sql = "SELECT t.id, t.user_id, t.name, DATE_FORMAT(t.last_use, '%Y-%m-%d %H:%i:%s') as last_use, t.sort, tb.cnt, tg.ncnt FROM `tags` as t LEFT OUTER JOIN ( SELECT `tag_id`, COUNT(tag_id) as cnt FROM tags_bookmarks GROUP BY tag_id ) tb ON t.id = tb.tag_id  LEFT OUTER JOIN ( SELECT `tag_id`, COUNT(tag_id) as ncnt FROM notes GROUP BY tag_id ) tg ON t.id = tg.tag_id ";
+    if (user_id) {
+        sql += "WHERE t.user_id = '" + user_id + "' ";
+    }
+    sql += "ORDER BY t.sort, t.last_use DESC";
     console.log('getTags sql = ', sql);
     return new Promise(function(resolve, reject) {
         client.query(sql, (err, result) => {
@@ -476,7 +480,7 @@ db.getTagsByIds = function(tagIds) {
 
 db.getAdvices = function(params) {
     console.log('getAdvices');
-    var sql = "SELECT mod(CEIL(RAND()*100), 5) as head_id, a.id, a.user_id, u.username, a.comment, a.category, DATE_FORMAT(a.created_at, '%Y-%m-%d %H:%i:%s') as created_at, a.state  FROM `advices` as a LEFT OUTER JOIN users as u ON a.user_id = u.id ORDER BY a.created_at DESC LIMIT 0, 100";
+    var sql = "SELECT a.id, a.user_id, u.username, a.comment, a.category, DATE_FORMAT(a.created_at, '%Y-%m-%d %H:%i:%s') as created_at, a.state  FROM `advices` as a LEFT OUTER JOIN users as u ON a.user_id = u.id ORDER BY a.created_at DESC LIMIT 0, 100";
     return new Promise(function(resolve, reject) {
         client.query(sql, (err, result) => {
             if (err) {
@@ -859,6 +863,7 @@ db.getBookmarksSearch = function(params) {
             sql += " AND `id` IN (SELECT `bookmark_id` FROM `tags_bookmarks` WHERE tag_id IN (" + params.tags + "))"
         }
     } else if (params.userRange == '2') {
+        sql += " AND `user_id` != '" + params.userId + "'"
         if (params.username) {
             sql += " AND `user_id` IN (SELECT `id` FROM `users` WHERE `username` LIKE '%" + params.username + "%' ) AND public=1 "
         }
@@ -1093,7 +1098,13 @@ db.addNote = function(note) {
 };
 
 db.getNotes = function(params) {
-    var sql = "SELECT notes.id, notes.content, notes.tag_id, DATE_FORMAT(notes.created_at, '%Y-%m-%d %H:%i:%s') as created_at, tags.name as tagName FROM `notes` LEFT JOIN tags ON  tags.id = notes.tag_id  WHERE notes.user_id = '" + params.user_id + "'";
+    var sql = "SELECT notes.id, notes.content, notes.public, notes.tag_id, DATE_FORMAT(notes.created_at, '%Y-%m-%d %H:%i:%s') as created_at, tags.name as tagName FROM `notes` LEFT JOIN tags ON  tags.id = notes.tag_id  WHERE notes.user_id = '" + params.user_id + "'";
+
+    if (params.dateCreate) {
+        var d = new Date();
+        d.setDate(d.getDate() - parseInt(params.dateCreate));
+        sql += " AND notes.created_at >= '" + d.format("yyyyMMdd") + "'"
+    }
 
     if (params.searchWord) {
         sql += " AND notes.content LIKE '%" + params.searchWord + "%'";
@@ -1101,6 +1112,10 @@ db.getNotes = function(params) {
 
     if (params.tagId) {
         sql += " AND notes.tag_id  = '" + params.tagId + "'";
+    }
+
+    if (params.tagIds) {
+        sql += "AND notes.tag_id IN (" + params.tagIds.toString() + ")"
     }
 
     sql += " ORDER BY `created_at` DESC"
@@ -1148,6 +1163,38 @@ db.updateNote = function(id, content, tag_id) {
             }
         });
     });
+}
+
+db.updateNotePublic = function(id, public) {
+  var sql = "UPDATE `notes` SET `public`='"+ public +"' WHERE (`id`='"+ id +"')";
+  console.log(sql);
+  return new Promise(function(resolve, reject) {
+      client.query(sql, (err, result) => {
+          if (err) {
+              reject(err);
+          } else {
+              resolve(result.affectedRows);
+          }
+      });
+  });
+}
+
+db.getNote = function(id) {
+  var sql = "SELECT * FROM `notes` WHERE `id` = '"+ id +"' LIMIT 0, 1";
+  console.log(sql);
+  return new Promise(function(resolve, reject) {
+      client.query(sql, (err, result) => {
+          if (err) {
+              reject(err);
+          } else {
+              if(result.length > 0) {
+                  result[0].public == 1 ? resolve(result[0].content) : resolve("提示：备忘处于私密状态！");
+              } else {
+                  resolve("提示：备忘已删除或不存在！");
+              }
+          }
+      });
+  });
 }
 
 module.exports = db;

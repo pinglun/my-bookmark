@@ -156,6 +156,16 @@ app.controller('menuCtr', ['$scope', '$stateParams', '$state', '$window', '$time
         });
     }
 
+    $scope.coffee = function () {
+        $state.go('settings', {
+            formIndex: 6,
+        });
+        pubSubService.publish('Common.menuActive', {
+            login: true,
+            index: dataService.LoginIndexSettings
+        });
+    }
+
     function updateMenuActive(index) {
         $('.ui.menu a.item').removeClass('selected');
         $('.ui.menu a.item:eq(' + index + ')').addClass('selected');
@@ -213,7 +223,7 @@ app.controller('menuCtr', ['$scope', '$stateParams', '$state', '$window', '$time
                 title: '操作提示',
                 position: 'bottom center',
                 variation: "very wide",
-                html: "<span><span class='fontred'>特别提示：对照更新日志，如果有更新，请清除一遍浏览器缓存，否则新功能无法使用！<br/>点击该按钮即可查看更新日志！</span><br/>1、在任意页面，按A键添加备忘录。<br/>2、在热门收藏页面，按R键随机查看热门收藏。<br/>3、在任意页面，按数字键切换菜单栏。<br/>4、在书签页面鼠标放在书签上，按C复制书签链接<br/>5、在书签页面鼠标放在书签上，按E编辑书签<br/>6、在书签页面鼠标放在书签上，按D删除书签<br/>7、在书签页面鼠标放在书签上，按I查看书签详情<br/>8、在任意页面，按INSERT做添加书签<br/>9、在任意页面，按ESC退出弹窗<br/></span>"
+                html: "<span><span class='fontred'>特别提示：对照更新日志，如果有更新，请按 Ctrl+F5 强制更新或者清理浏览器缓存！<br/>点击该按钮即可查看更新日志！</span><br/>1、在任意页面，按A键添加备忘录。<br/>2、在热门收藏页面，按R键随机查看热门收藏。<br/>3、在任意页面，按数字键切换菜单栏。<br/>4、在书签页面鼠标放在书签上，按C复制书签链接<br/>5、在书签页面鼠标放在书签上，按E编辑书签<br/>6、在书签页面鼠标放在书签上，按D删除书签<br/>7、在书签页面鼠标放在书签上，按I查看书签详情<br/>8、在任意页面，按INSERT做添加书签<br/>9、在任意页面，按ESC退出弹窗<br/></span>"
             });
     }, 1000)
 
@@ -223,11 +233,15 @@ app.controller('menuCtr', ['$scope', '$stateParams', '$state', '$window', '$time
             var key = event.key.toUpperCase();
             if (key == 'CONTROL' || key == 'SHIFT' || key == 'ALT') {
                 $scope.longPress = true;
+                // 有时候没有检测到keyup，会一直按无效，干脆过个3秒就认为你抬起来了
+                // 反正你按下我还是会给你标记为true的。
+                $timeout(function () {
+                  $scope.longPress = false;
+                }, 3000)
             }
 
             if (dataService.keyShortcuts()) {
                 // 全局处理添加备忘录
-                // console.log('keydown key = ', key);
                 if (key == 'A') {
                     if ($scope.selectLoginIndex !== dataService.LoginIndexNote) {
                         updateMenuActive($scope.selectLoginIndex = dataService.LoginIndexNote);
@@ -250,6 +264,7 @@ app.controller('menuCtr', ['$scope', '$stateParams', '$state', '$window', '$time
                 // 数字键用来切换菜单
                 if (!isNaN(key)) {
                     var num = parseInt(key);
+                    if(num < 0 || num > 6) return;
                     pubSubService.publish('Common.menuActive', {
                         login: $scope.login,
                         index: num - 1
@@ -261,6 +276,22 @@ app.controller('menuCtr', ['$scope', '$stateParams', '$state', '$window', '$time
                     var url = $scope.quickUrl[key];
                     if (url) {
                         $window.open(url, '_blank');
+                        var params = {
+                            url: url,
+                        }
+                        bookmarkService.jumpQuickUrl(params)
+                        .then((data) => {
+                            if(!data.id){
+                                toastr.info('网址：' + url + "还没添加到你的书签系统，请添加！", "警告");
+                                var bookmark = {
+                                    url: url
+                                }
+                                pubSubService.publish('TagCtr.storeBookmark', bookmark);
+                            }
+                        })
+                        .catch((err) => {
+                            
+                        });
                     }
                 }
             }

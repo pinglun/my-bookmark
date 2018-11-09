@@ -14,6 +14,8 @@
                 </a>
                 <a class="item" ng-class="{active:form[5]}" ng-click="changeForm(5)">更新日志
                 </a>
+                <a class="item" ng-class="{active:form[6]}" ng-click="changeForm(6)">请喝咖啡
+                </a>
             </div>
         </div>
         <div class="twelve wide stretched column">
@@ -50,12 +52,12 @@
                             <label>表格</label>
                         </div>
                     </div>
-                    <div class="field" ng-click="updateDefaultShowStyle('card')">
+                    <!-- <div class="field" ng-click="updateDefaultShowStyle('card')">
                         <div class="ui radio checkbox js-radio-default-card">
                             <input type="radio" name="default-show-style">
                             <label>卡片</label>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </form>
             <div class="ui four statistics" style="margin-top:30px;" ng-show="form[1]">
@@ -154,7 +156,7 @@
                 <p>12、在设置的全局链接，可设置快捷键，用来在任何页面，快速打开设置的链接。(完成)</p>
                 <p>13、安装<a href="https://chrome.google.com/webstore/detail/%E4%B9%A6%E7%AD%BE%E5%BF%AB%E9%80%9F%E6%B7%BB%E5%8A%A0/paajmalhmjgdihaikmdfiplfmjlnkjgp" target="_blank">Chrome插件</a>(需科学上网)，可在任意界面快速添加书签。(完成)</p>
                 <h3 class="ui dividing header">联系方式</h3>
-                <p>微信跟QQ：530485521，记得备注加：书签。</p>
+                <p>QQ：530485521，记得备注加：书签。</p>
                 <h3 class="ui dividing header">开发备忘(非开发人员请无视)</h3>
                 <p>1、该代码我托管在Github上<a href="https://github.com/luchenqun/my-bookmark" target="_blank">my-bookmark</a>。该地址有文件夹详细说明以及部署步骤。git地址：git@github.com:luchenqun/my-bookmark.git。如果你需要源码，你尽可随意使用此项目无需通知我。</p>
                 <img class="ui centered fluid image" src="./images/screenshot.gif">
@@ -164,6 +166,7 @@
                 <p>以下几个系统默认使用的按键无法使用：<br/>
                     <span ng-repeat="(key, value) in forbidQuickKey">{{key}}：{{value}}<br/></span>
                 </p>
+                <p>如果你想更换快捷链接，你需要先删除再添加。</p>
                 <div class="ui divider"></div>
                 <div class="ui form">
                     <div class="inline fields">
@@ -213,6 +216,20 @@
                 <button class="fluid ui button" ng-click='getUpdateLog(logsUrl)' ng-show="!loadingLogs">
                     更早日志
                 </button>
+            </div>
+            <div class="ui container js-p-info" ng-show="form[6]">
+                <h3 class="ui dividing header">赞赏说明</h3>
+                <p>赞赏金额主要用于服务器的租用与域名的费用，对于赞赏有以下几点说明：</p>
+                <p>1、目前租用的服务器Vultr，每月5$，折合人名币大概35元/月。如果有新用户想购买Vultr服务器的，可以点击<a href="http://www.vultr.com/?ref=6902013" target="_blank">链接</a>进行购买，这样你我将都能得到10$。域名mybookmark.cn我花151元买了五年，2021年11月份到期。</p>
+                <p>2、赞赏转账的时候，请留言添加“账号 + 书签赞赏”这四个汉字。供我区分。</p>
+                <h3 class="ui dividing header">赞赏二维码</h3>
+                <div class="ui grid">
+                    <div class="one wide column"></div>
+                    <div class="five wide column">微信<img class="ui rounded left floated medium image" src="./images/wx.png"></div>
+                    <div class="two wide column"></div>
+                    <div class="five wide column">支付宝<img class="ui rounded right floated medium image" src="./images/zfb.png"></div>
+                    <div class="one wide column"></div>
+                </div>
             </div>
         </div>
     </div>

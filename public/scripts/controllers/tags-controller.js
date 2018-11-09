@@ -1,7 +1,6 @@
-app.controller('tagsCtr', ['$scope', '$filter', '$window', '$stateParams', '$timeout', '$document', 'ngDialog', 'bookmarkService', 'pubSubService', 'dataService', function ($scope, $filter, $window, $stateParams, $timeout, $document, ngDialog, bookmarkService, pubSubService, dataService) {
+app.controller('tagsCtr', ['$scope', '$filter', '$state', '$window', '$stateParams', '$timeout', '$document', 'ngDialog', 'bookmarkService', 'pubSubService', 'dataService', function ($scope, $filter, $state, $window, $stateParams, $timeout, $document, ngDialog, bookmarkService, pubSubService, dataService) {
     console.log("Hello tagsCtr...", $stateParams);
-    var browser = dataService.browser();
-    if(browser.mobile && !browser.iPad){
+    if(dataService.smallDevice()){
         $window.location = "http://m.mybookmark.cn/#/tags";
         return;
     }
@@ -14,7 +13,7 @@ app.controller('tagsCtr', ['$scope', '$filter', '$window', '$stateParams', '$tim
     var addBookmarkId = -1;
     $scope.hoverBookmark = null;
     $scope.order = [false, false, false];
-    $scope.order[($stateParams && $stateParams.orderIndex) || 0] = true;
+    $scope.order[($stateParams && $stateParams.orderIndex) || 1] = true;
     $scope.loadBookmarks = false;
     $scope.loadTags = false;
     $scope.tags = []; // 书签数据
@@ -481,12 +480,11 @@ app.controller('tagsCtr', ['$scope', '$filter', '$window', '$stateParams', '$tim
                         find = true; // 如果是删了分类返回来，那么要重新默认选中第一个分类
                     }
                 })
-                if (!find && $scope.currentTagId !== -1) $scope.currentTagId = null;
-                if (!$scope.currentTagId && $scope.tags.length > 0) {
-                    $scope.currentTagId = $scope.tags[0].id;
-                    $scope.tags[0].bookmarkClicked = true;
+                if (!find && $scope.currentTagId !== -1 && $scope.currentTagId !== -2) {
+                    $scope.currentTagId = -1;
+                    $scope.costomTag.bookmarkClicked = true;
                 }
-
+                
                 if ($scope.currentTagId) {
                     if (!$scope.editMode) {
                         $scope.getBookmarks($scope.currentTagId, $scope.currentPage);
@@ -495,16 +493,15 @@ app.controller('tagsCtr', ['$scope', '$filter', '$window', '$stateParams', '$tim
                     toastr.info('您还没有书签分类，请点击菜单栏的添加按钮进行添加', "提示");
                 }
                 $scope.loadTags = false;
+                pubSubService.publish('Common.menuActive', {
+                    login: true,
+                    index: dataService.LoginIndexTags
+                });
             })
             .catch((err) => {
-                console.log('getTags err', err);
+                dataService.netErrorHandle(err, $state);
                 $scope.loadTags = false;
             });
-
-        pubSubService.publish('Common.menuActive', {
-            login: true,
-            index: dataService.LoginIndexTags
-        });
     }
 
     pubSubService.subscribe('EditCtr.inserBookmarsSuccess', $scope, function (event, data) {

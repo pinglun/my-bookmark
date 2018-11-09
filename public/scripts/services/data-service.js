@@ -6,14 +6,14 @@ app.factory('dataService', [function() {
         LoginIndexNote: 2,
         LoginIndexHot: 3,
         LoginIndexSettings: 4,
-        // LoginIndexPraise: 5,
         LoginIndexAdvice: 5,
+        LoginIndexPraise: 6,
 
         // 非登陆索引
         NotLoginIndexHome: 0,
         NotLoginIndexLogin: 1,
         NotLoginIndexHot: 2,
-        // NotLoginIndexPraise: 3,
+        NotLoginIndexPraise: 3,
 
         loginMenus: [{
             uiSref: 'bookmarks',
@@ -52,7 +52,7 @@ app.factory('dataService', [function() {
             ];
 
             var t = data[parseInt(Math.random() * 1000) % data.length];
-            return t;
+            return 'fade' || t; // 去掉一些有攻击性的动画
         },
         transition: function(selector, params) {
             var data = {};
@@ -130,10 +130,10 @@ app.factory('dataService', [function() {
             $("#clipboard").attr("data-clipboard-text", text);
             document.getElementById("clipboard").click();
         },
-        browser: function() {
-            var u = navigator.userAgent,
-                app = navigator.appVersion;
-            return { //移动终端浏览器版本信息
+        smallDevice: function() {
+            var u = navigator.userAgent;
+            var app = navigator.appVersion;
+            var device = { //移动终端浏览器版本信息
                 trident: u.indexOf('Trident') > -1, //IE内核
                 presto: u.indexOf('Presto') > -1, //opera内核
                 webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
@@ -145,6 +145,18 @@ app.factory('dataService', [function() {
                 iPad: u.indexOf('iPad') > -1, //是否iPad
                 webApp: u.indexOf('Safari') == -1 //是否web应该程序，没有头部与底部
             };
+
+            if((device.mobile && !device.iPad) || (screen && screen.availWidth < 768)){
+                return true;
+            }
+
+            return false;
+        },
+        netErrorHandle(err, $state) {
+            if(err == "Unauthorized") {
+                $state.go("login");
+                toastr.error('您好像没有登陆，或者登陆session过期了，请重新登陆！', "提示");
+            }
         }
     };
 

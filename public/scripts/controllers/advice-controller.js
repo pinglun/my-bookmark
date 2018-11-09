@@ -1,5 +1,9 @@
 app.controller('adviceCtr', ['$scope', '$state', '$timeout', 'bookmarkService', 'pubSubService', 'dataService', function($scope, $state, $timeout, bookmarkService, pubSubService, dataService) {
     console.log("Hello adviceCtr");
+    if(dataService.smallDevice()){
+        $window.location = "http://m.mybookmark.cn/#/tags";
+        return;
+    }
     var maxSelections = 3;
 
     $scope.comment = '';
@@ -38,13 +42,16 @@ app.controller('adviceCtr', ['$scope', '$state', '$timeout', 'bookmarkService', 
                 if ($scope.advices.length == 0) {
                     transition();
                 }
+                data.forEach(element => {
+                    element.imgData = new Identicon(md5(element.username)).toString();
+                });
                 $scope.advices = data;
                 pubSubService.publish('Common.menuActive', {
                     login: true,
                     index: dataService.LoginIndexAdvice
                 });
             })
-            .catch((err) => console.log('getAdvices err', err));
+            .catch((err) => dataService.netErrorHandle(err, $state));
     }
 
     setTimeout(function() {

@@ -6,7 +6,7 @@ var db = require('../database/db.js');
 var parseHtml = require('../common/parse_html.js');
 var download = require('download');
 var multer = require('multer');
-var webshot = require('webshot');
+// var webshot = require('webshot');
 var fs = require('fs');
 var request = require('request');
 var cheerio = require('cheerio');
@@ -52,6 +52,25 @@ api.post('/clickBookmark', function(req, res) {
         .then((user) => { return user.id == req.session.userId ? db.clickBookmark(req.body.params.id, req.session.userId) : Promise.resolve(0); })
         .then((affectedRows) => res.json({}))
         .catch((err) => console.log('clickBookmark error', err));
+});
+
+api.post('/jumpQuickUrl', function(req, res) {
+    console.log("jumpQuickUrl username = ", req.session.username);
+    if (!req.session.user) {
+        res.send(401);
+        return;
+    }
+    db.getBookmarkbyUrl(req.session.user.id, req.body.params.url)
+        .then((bookmarkId) => {
+            res.json({id: bookmarkId});
+            if (bookmarkId) {
+                return db.clickBookmark(bookmarkId, req.session.user.id);
+            } else {
+                return Promise.reject(0);
+            }
+        })
+        .then((affectedRows) => {})
+        .catch((err) => console.log('jumpQuickUrl err', err)); // oops!
 });
 
 api.post('/login', function(req, res) {
@@ -516,6 +535,8 @@ api.get('/bookmarksByTag', function(req, res) {
         bookmarks: [],
     }
 
+    // -1 获取自己定制的
+    // -2 获取全站定制的
     var fun = (params.tagId <= -1) ? (params.tagId == -1 ? db.getBookmarksCostomTag : db.getBookmarksCostomAllUsersTag) : (db.getBookmarksByTag);
 
     fun((params.tagId <= -1) ? (userId) : (params), params.perPageItems)
@@ -526,7 +547,7 @@ api.get('/bookmarksByTag', function(req, res) {
         })
         .then((tbs) => {
             tagsBookmarks = tbs;
-            return db.getTags(userId);
+            return db.getTags(params.tagId >= -1 ? userId : null);
         })
         .then((tags) => {
             // 获取每个书签的所有分类标签
@@ -799,7 +820,7 @@ api.post('/addBookmark', function(req, res) {
     }
     var bookmark = req.body.params;
     var userId = req.session.user.id;
-    var tags = bookmark.tags;
+    var tags = [bookmark.tags[bookmark.tags.length - 1]]; // 只允许添加一个分类
     var bookmarkId = -1;
     var ret = {};
     var update = false;
@@ -1145,8 +1166,11 @@ api.getSnapByTimer = function() {
     console.log('getSnapByTimer...........');
     var timeout = 30000
     setInterval(function() {
-        var today = new Date().getDate();
-        db.getBookmarkWaitSnap(today)
+        var date = new Date();
+        var today = date.getDate();
+        var hours = date.getHours();
+        if (hours >=2 && hours <= 5) {
+            db.getBookmarkWaitSnap(today)
             .then((bookmarks) => {
                 if (bookmarks.length == 1) {
                     var id = bookmarks[0].id;
@@ -1188,6 +1212,8 @@ api.getSnapByTimer = function() {
                 }
             })
             .catch((err) => console.log('getBookmarkWaitSnap err', err));
+        }
+
     }, timeout + 1000);
 }
 
@@ -1207,7 +1233,7 @@ api.getFaviconByTimer = function() {
                 if (bookmarks.length == 1) {
                     var id = bookmarks[0].id;
                     var faviconState = bookmarks[0].favicon_state;
-                    var url = bookmarks[0].url;
+                    var url = encodeURI(bookmarks[0].url);
                     var faviconPath = './public/images/favicon/' + id + '.ico';
                     var defaultFile = './public/images/favicon/default.ico';
 
@@ -1223,7 +1249,7 @@ api.getFaviconByTimer = function() {
                             });
                     } else {
                         // http://www.cnblogs.com/zhangwei595806165/p/4984912.html 各种方法都试一遍
-                        var faviconUrl = "http://45.32.69.126:3000/?url=" + url; // 默认地址
+                        var faviconUrl = "http://47.75.89.228:3000/?url=" + url; // 默认地址
                         if (faviconState == 1) {
                             faviconUrl = "https://api.statvoo.com/favicon/?url=" + url;
                         } else if (faviconState == 2) {
@@ -1301,7 +1327,7 @@ api.getHotBookmarksByTimer = function() {
         }
         var url = "https://api.shouqu.me/api_service/api/v1/daily/dailyMark";
         var alterRex = "/mmbiz.qpic.cn|images.jianshu.io|zhimg.com/g";
-        var defaultSnap = "./images/snap/default.png";
+        var defaultSnap = "./images/default.jpg";
         var defaultFavicon = "./images/favicon/default.ico";
         request.post({
             url: url,
@@ -1402,15 +1428,38 @@ api.post('/addNote', function(req, res) {
 
 api.get('/notes', function(req, res) {
     console.log("getNotes username = ", req.session.username);
-    if (!req.session.user) {
+    var params = req.query;
+    if (!params.shareNote && !req.session.user) {
         res.send(401);
         return;
     }
-    var params = req.query;
-    params.user_id = req.session.user.id;
-    db.getNotes(params)
-        .then((data) => res.json(data))
-        .catch((err) => console.log('notes', err));
+    if (params.shareNote) {
+      db.getNote(params.shareNote)
+      .then((data) => res.send(`
+      <body style="margin:0px;height:100%;">
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+          <script>
+            if(screen && screen.availWidth <= 1024) {
+              setTimeout(() => {
+                document.getElementById("note-div").style.width = "100%";
+                document.getElementById("note-div").style["background-color"] = "#F3F4F5";
+                document.getElementById("note").style.width = "95%";
+              }, 100);
+            }
+          </script>
+        </head>
+        <div id="note-div" style="text-align:center;">
+          <pre id="note" style="background-color:RGB(243,244,245); padding:0px 10px 0px 10px; margin:0px; width:60%; min-height:100%;display: inline-block;text-align: left; font-size: 15px; font-family:italic arial,sans-serif;word-wrap: break-word;white-space: pre-wrap;">\n\n${data}\n\n</pre>
+        </div>
+      </body>`))
+      .catch((err) => console.log('notes', err));
+    } else {
+      params.user_id = req.session.user.id;
+      db.getNotes(params)
+          .then((data) => res.json(data))
+          .catch((err) => console.log('notes', err));
+    }
 });
 
 api.delete('/delNote', function(req, res) {
@@ -1446,12 +1495,34 @@ api.post('/updateNote', function(req, res) {
             result: affectedRows
         }))
         .catch((err) => {
-            console.log('updateBookmark err', err);
+            console.log('updateNote err', err);
             res.json({
                 result: -1
             })
         }); // oops!
 })
+
+api.post('/updateNotePublic', function(req, res) {
+  console.log("updateNotePublic username = ", req.session.username);
+  if (!req.session.user) {
+      res.send(401);
+      return;
+  }
+
+  var note = req.body.params;
+  console.log('hello updateNotePublic', JSON.stringify(note));
+  db.updateNotePublic(note.id, note.public)
+      .then((affectedRows) => res.json({
+          result: affectedRows
+      }))
+      .catch((err) => {
+          console.log('updateNote err', err);
+          res.json({
+              result: -1
+          })
+      }); // oops!
+})
+
 
 // 实现文件下载
 api.get('/download', function(req, res) {
